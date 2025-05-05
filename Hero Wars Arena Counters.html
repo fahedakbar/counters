@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hero Wars Arena Counter Calculator with Power Scale</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body, html {
+      margin: 0; padding: 0; height: 100vh; font-family: Arial, sans-serif;
+      background: #f0f2f5;
+    }
+    .container {
+      display: flex;
+      height: 100%;
+      max-width: 1200px;
+      margin: auto;
+      background: white;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .left-panel, .right-panel {
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .left-panel {
+      width: 45%;
+      border-right: 1px solid #ddd;
+      background: #fafafa;
+    }
+    .right-panel {
+      width: 55%;
+    }
+    h2 {
+      margin-top: 0;
+      color: #333;
+    }
+    .team-section {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    select, input[type="range"] {
+      width: 100%;
+      padding: 8px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: white;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    select:hover, select:focus, input[type="range"]:hover, input[type="range"]:focus {
+      border-color: #2ecc71;
+      outline: none;
+    }
+    label {
+      font-weight: bold;
+      margin-top: 10px;
+      display: block;
+      color: #2c3e50;
+    }
+    .slider-value {
+      text-align: center;
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: #16a085;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      font-size: 1.1rem;
+      background-color: #2ecc71;
+      border: none;
+      border-radius: 5px;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #27ae60;
+    }
+    .result {
+      background: #f8f9fa;
+      border-radius: 6px;
+      padding: 20px;
+      box-shadow: inset 0 0 8px #ddd;
+      min-height: 300px;
+      color: #222;
+    }
+    ul {
+      padding-left: 20px;
+    }
+    ul li {
+      margin-bottom: 8px;
+    }
+    .team-block {
+      margin-bottom: 25px;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 15px;
+    }
+    .hero-name {
+      font-weight: bold;
+      color: #2c3e50;
+    }
+    .pet-name {
+      font-style: italic;
+      color: #16a085;
+    }
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+      .left-panel, .right-panel {
+        width: 100%;
+        height: 50vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="left-panel">
+      <h2>Enemy Team Composition</h2>
+      <p><strong>How Counters Work:</strong> In Hero Wars Arena, each hero has specific weaknesses that can be exploited by other heroes known as counters. These counters disrupt enemy abilities, block key skills like resurrection or energy gain, and reduce damage or healing effectiveness. Choosing the right counters against enemy heroes and their pets increases your chances of winning by neutralizing their strengths and breaking their team synergy.</p>
+
+      <div class="team-section">
+        <select id="hero1"><option value="">Select Hero 1</option></select>
+        <select id="hero2"><option value="">Select Hero 2</option></select>
+        <select id="hero3"><option value="">Select Hero 3</option></select>
+        <select id="hero4"><option value="">Select Hero 4</option></select>
+        <select id="hero5"><option value="">Select Hero 5</option></select>
+        <select id="pet">
+          <option value="">Select Pet</option>
+          <option value="Axel">Axel</option>
+          <option value="Khorus">Khorus</option>
+          <option value="Biscuit">Biscuit</option>
+          <option value="Albus">Albus</option>
+          <option value="Cain">Cain</option>
+          <option value="Oliver">Oliver</option>
+          <option value="Merlin">Merlin</option>
+          <option value="Fenris">Fenris</option>
+          <option value="Mara">Mara</option>
+          <option value="Vex">Vex</option>
+        </select>
+      </div>
+
+      <label for="powerRange">Enemy Team Average Power Level:</label>
+      <input type="range" id="powerRange" min="650000" max="1130000" step="1000" value="890000" oninput="updatePowerValue(this.value)" />
+      <div class="slider-value" id="powerValue">890,000</div>
+
+      <button onclick="calculateCounters()">Calculate Counters</button>
+    </div>
+
+    <div class="right-panel">
+      <h2>Recommended Counter Teams</h2>
+      <div class="result" id="result">
+        <p>Select enemy heroes and pet, then click "Calculate Counters" to see recommendations here.</p>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const heroes = ["Astaroth","Cleaver","Lilith","Peppy","Dorian","Jorgen","Lars","Krista",
+  "Kayla","Aidan","Rufus","Ziri","Amira","Satori","Martha","Celeste","Heidi","Andvari","Lian",
+  "Maya","Isaac","Ginger","Fox","Astrid & Lucas","Arachne","Daredevil","Sebastian","Jet",
+  "Judge","Nebula","Orion","Julius","Lara Croft","Corvus","Morrigan","Helios","Phobos","Faceless",
+  "Markus","Thea","Galahad","Ishmael","Keira","Qing Mao","Artemis","Dante","K'arkh",
+  "Yasmine","Aurora","Cornelius","Mojo","Jhu","Augustus","Leo","Donnie","Raph","Mikey"];
+
+  document.querySelectorAll('select[id^="hero"]').forEach(dropdown => {
+    heroes.forEach(hero => {
+      dropdown.innerHTML += `<option value="${hero}">${hero}</option>`;
+    });
+  });
+
+  function updatePowerValue(val) {
+    document.getElementById('powerValue').textContent = Number(val).toLocaleString();
+  }
+
+  const counterDatabase = {
+    "Augustus": [
+      { hero: "Isaac", explanation: "Isaac reduces magical damage and controls Augustus.", pet: "Biscuit" },
+      { hero: "Sebastian", explanation: "Sebastian removes debuffs and slows enemy attacks.", pet: "Oliver" },
+      { hero: "Aurora", explanation: "Aurora dodges attacks and deals AoE damage.", pet: "Fenris" }
+    ],
+    "Leo": [
+      { hero: "Helios", explanation: "Helios deals magic damage and healing reduction.", pet: "Albus" },
+      { hero: "Morrigan", explanation: "Morrigan blocks resurrection and gains power on enemy revives.", pet: "Axel" },
+      { hero: "Corvus", explanation: "Corvus drains enemy energy and punishes energy-reliant teams.", pet: "Cain" }
+    ],
+    "Donnie": [
+      { hero: "Celeste", explanation: "Celeste stuns and bursts down Donnie.", pet: "Merlin" },
+      { hero: "Jorgen", explanation: "Jorgen drains energy delaying Donnie's ultimates.", pet: "Biscuit" },
+      { hero: "Rufus", explanation: "Rufus absorbs damage and counters magic-heavy teams.", pet: "Mara" }
+    ],
+    "Raph": [
+      { hero: "Morrigan", explanation: "Morrigan blocks resurrection and counters healing.", pet: "Axel" },
+      { hero: "Heidi", explanation: "Heidi bursts damage and breaks shields.", pet: "Fenris" },
+      { hero: "Helios", explanation: "Helios applies healing reduction and magic damage.", pet: "Albus" }
+    ],
+    "Mikey": [
+      { hero: "Helios", explanation: "Helios disrupts backline support with magic damage.", pet: "Albus" },
+      { hero: "Corvus", explanation: "Corvus punishes energy gain reliant teams.", pet: "Cain" },
+      { hero: "Sebastian", explanation: "Sebastian removes debuffs and slows attacks.", pet: "Oliver" }
+    ],
+    "Dante": [
+      { hero: "Corvus", explanation: "Corvus drains energy and punishes burst teams.", pet: "Cain" },
+      { hero: "Morrigan", explanation: "Morrigan blocks resurrection and sustains with soul essence.", pet: "Axel" },
+      { hero: "Iris", explanation: "Iris silences and disrupts enemy synergy.", pet: "Fenris" }
+    ],
+    "Heidi": [
+      { hero: "Corvus", explanation: "Corvus drains energy and punishes Heidi's team.", pet: "Cain" },
+      { hero: "Helios", explanation: "Helios applies healing reduction and magic damage.", pet: "Albus" },
+      { hero: "Sebastian", explanation: "Sebastian removes debuffs and slows attacks.", pet: "Oliver" }
+    ],
+    "K'arkh": [
+      { hero: "Andvari", explanation: "Andvari disrupts positioning and reduces damage.", pet: "Biscuit" },
+      { hero: "Helios", explanation: "Helios applies healing reduction and magic damage.", pet: "Albus" },
+      { hero: "Aurora", explanation: "Aurora dodges and deals AoE damage.", pet: "Fenris" }
+    ],
+    "Satori": [
+      { hero: "Rufus", explanation: "Rufus absorbs damage and counters burst.", pet: "Mara" },
+      { hero: "Celeste", explanation: "Celeste stuns and bursts down Satori.", pet: "Merlin" },
+      { hero: "Jorgen", explanation: "Jorgen drains energy delaying ultimates.", pet: "Biscuit" }
+    ],
+    "default": [
+      { hero: "Corvus", explanation: "Corvus punishes energy reliant teams.", pet: "Cain" },
+      { hero: "Morrigan", explanation: "Morrigan blocks resurrection and sustains well.", pet: "Axel" },
+      { hero: "Helios", explanation: "Helios applies healing reduction and magic damage.", pet: "Albus" }
+    ]
+  };
+
+  const petCounters = {
+    "Khorus": {counter: "Biscuit", effect: -15},
+    "Vex": {counter: "Fenris", effect: -10},
+    "Axel": {counter: "Khorus", effect: -20},
+    "Mara": {counter: "Sebastian", effect: -25}
+  };
+
+  function uniqueByHero(arr) {
+    const seen = new Set();
+    return arr.filter(item => {
+      if(seen.has(item.hero)) return false;
+      seen.add(item.hero);
+      return true;
+    });
+  }
+
+  function calculateCounters() {
+    const enemyTeam = [
+      document.getElementById("hero1").value,
+      document.getElementById("hero2").value,
+      document.getElementById("hero3").value,
+      document.getElementById("hero4").value,
+      document.getElementById("hero5").value
+    ].filter(h => h);
+
+    const enemyPet = document.getElementById("pet").value;
+    const enemyPower = Number(document.getElementById("powerRange").value);
+
+    if (enemyTeam.length === 0) {
+      document.getElementById("result").innerHTML = "<p>Please select at least one enemy hero.</p>";
+      return;
+    }
+
+    let allCounters = [];
+    enemyTeam.forEach(hero => {
+      if(counterDatabase[hero]) {
+        allCounters = allCounters.concat(counterDatabase[hero]);
+      } else {
+        allCounters = allCounters.concat(counterDatabase["default"]);
+      }
+    });
+
+    allCounters = uniqueByHero(allCounters);
+
+    const teams = [];
+    for(let i=0; i<3; i++) {
+      const team = [];
+      for(let j=0; j<5; j++) {
+        const index = (i*5 + j) % allCounters.length;
+        team.push(allCounters[index]);
+      }
+      teams.push(team);
+    }
+
+    const recommendedPetCounter = petCounters[enemyPet]?.counter || "Axel";
+    const baseWinRate = 70;
+    const petEffect = petCounters[enemyPet]?.effect || 0;
+
+    let html = `<p><strong>Recommended pet counter to enemy pet <em>${enemyPet || "None"}</em>:</strong> <span class="pet-name">${recommendedPetCounter}</span></p>`;
+
+    teams.forEach((team, idx) => {
+      const petFrequency = {};
+      team.forEach(ch => {
+        petFrequency[ch.pet] = (petFrequency[ch.pet] || 0) + 1;
+      });
+      let teamPet = "Axel";
+      let maxCount = 0;
+      for (const pet in petFrequency) {
+        if (petFrequency[pet] > maxCount) {
+          maxCount = petFrequency[pet];
+          teamPet = pet;
+        }
+      }
+
+      const winRate = Math.min(95, baseWinRate + team.length * 5 + petEffect);
+
+      // Realistic suggested power level calculation with caps
+      const baseMarginPercent = 0.05; // 5% base margin
+      const perCounterHeroPercent = 0.015; // 1.5% per counter hero
+      const petSynergyBonusPercent = -petEffect / 100; // pet effect reduces margin if negative
+
+      let marginPercent = baseMarginPercent + (perCounterHeroPercent * team.length) + petSynergyBonusPercent;
+      if (marginPercent < 0.02) marginPercent = 0.02; // minimum 2%
+      if (marginPercent > 0.15) marginPercent = 0.15; // maximum 15%
+
+      let suggestedPower = Math.round(enemyPower * (1 + marginPercent));
+      if (suggestedPower > 1120000) suggestedPower = 1120000;
+
+      html += `<div class="team-block">
+        <h3>Counter Team #${idx + 1} - Estimated Win Rate: ${winRate}%</h3>
+        <p><strong>Team Pet:</strong> <span class="pet-name">${teamPet}</span></p>
+        <p><strong>Suggested Power Level to Win:</strong> <span>${suggestedPower.toLocaleString()}</span></p>
+        <ul>`;
+      team.forEach(counterHero => {
+        html += `<li>
+          <span class="hero-name">${counterHero.hero}</span> 
+          <span class="pet-name">(Pet: ${counterHero.pet})</span><br />
+          <em>${counterHero.explanation}</em>
+        </li>`;
+      });
+      html += `</ul></div>`;
+    });
+
+    document.getElementById("result").innerHTML = html;
+  }
+</script>
+</body>
+</html>
